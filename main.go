@@ -2,6 +2,9 @@ package main
 
 import (
 	"embed"
+	"image"
+	"image/png"
+	"net/http"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -21,7 +24,8 @@ func main() {
 		Width:  1024,
 		Height: 768,
 		AssetServer: &assetserver.Options{
-			Assets: assets,
+			Assets:     assets,
+			Middleware: middleware,
 		},
 		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
 		OnStartup:        app.startup,
@@ -33,4 +37,15 @@ func main() {
 	if err != nil {
 		println("Error:", err.Error())
 	}
+}
+
+func middleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/test" {
+			img := image.NewRGBA(image.Rect(0, 0, 100, 100))
+			png.Encode(w, img)
+		} else {
+			next.ServeHTTP(w, r)
+		}
+	})
 }
